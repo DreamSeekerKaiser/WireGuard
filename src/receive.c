@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2015-2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+ * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
 #include "queueing.h"
@@ -120,7 +120,7 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 	under_load = skb_queue_len(&wg->incoming_handshakes) >=
 		     MAX_QUEUED_INCOMING_HANDSHAKES / 8;
 	if (under_load)
-		last_under_load = ktime_get_boot_fast_ns();
+		last_under_load = ktime_get_coarse_boottime_ns();
 	else if (last_under_load)
 		under_load = !wg_birthdate_has_expired(last_under_load, 1);
 	mac_state = wg_cookie_validate_packet(&wg->cookie_checker, skb,
@@ -538,7 +538,7 @@ static void wg_packet_consume_data(struct wg_device *wg, struct sk_buff *skb)
 	rcu_read_lock_bh();
 	PACKET_CB(skb)->keypair =
 		(struct noise_keypair *)wg_index_hashtable_lookup(
-			&wg->index_hashtable, INDEX_HASHTABLE_KEYPAIR, idx,
+			wg->index_hashtable, INDEX_HASHTABLE_KEYPAIR, idx,
 			&peer);
 	if (unlikely(!wg_noise_keypair_get(PACKET_CB(skb)->keypair)))
 		goto err_keypair;
